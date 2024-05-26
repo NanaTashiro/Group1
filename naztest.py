@@ -22,7 +22,7 @@ def train_and_evaluate_models(X_train_scaled_df, Y_train):
     st.write("Mean Squared Error:", tree_mse)
     st.write("R-squared:", tree_r2)
     st.write("Mean Absolute Error:", tree_mae)
-    st.write()
+    st.write("")
 
     # Linear Regression
     linear_model = LinearRegression()
@@ -36,7 +36,7 @@ def train_and_evaluate_models(X_train_scaled_df, Y_train):
     st.write("Mean Squared Error:", linear_mse)
     st.write("R-squared:", linear_r2)
     st.write("Mean Absolute Error:", linear_mae)
-    st.write()
+    st.write("")
 
     # Polynomial Regression
     poly_features = PolynomialFeatures(degree=2)
@@ -54,7 +54,7 @@ def train_and_evaluate_models(X_train_scaled_df, Y_train):
     st.write("Mean Squared Error:", poly_mse)
     st.write("R-squared:", poly_r2)
     st.write("Mean Absolute Error:", poly_mae)
-    st.write()
+    st.write("")
 
     # Random Forest Regressor
     model = RandomForestRegressor(n_estimators=50, random_state=42)
@@ -70,7 +70,7 @@ def train_and_evaluate_models(X_train_scaled_df, Y_train):
     st.write("Mean Squared Error:", rf_mse)
     st.write("R-squared:", rf_r2)
     st.write("Mean Absolute Error:", mae)
-    st.write()
+    st.write("")
 
     return tree_pred
 
@@ -119,7 +119,23 @@ def load_data():
 
 # Main Streamlit app
 def main():
-    st.title('New Zealand Election Polling Data Analysis')
+    st.title('Linear, Polynomial, Multiple Regression Model')
+    
+    # Model training and evaluation
+    st.write('### Model Training and Evaluation')
+    X_train_scaled_df = pd.read_csv('X_train_scaled_df.csv')  # Replace with actual data loading
+    Y_train = pd.read_csv('Y_train.csv')  # Replace with actual data loading
+    tree_pred = train_and_evaluate_models(X_train_scaled_df, Y_train)
+    
+    # Creating a DataFrame for predictions
+    tree_pred_df = pd.DataFrame(tree_pred, columns=Y_train.columns, index=Y_train.index)
+    
+    # Plot actual vs predicted votes
+    unique_electorates = Y_train['Electorate'].unique()
+    for electorate in unique_electorates:
+        plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
+
+    st.write('### New Zealand Election Polling Data Analysis')
     st.write('This app visualizes the polling results of various political parties in New Zealand from 2017 to 2024.')
 
     # Load data
@@ -141,20 +157,7 @@ def main():
     else:
         st.write('Please select at least one party to display.')
 
-    # Model training and evaluation
-    st.write('### Model Training and Evaluation')
-    X_train_scaled_df = pd.read_csv('X_train_scaled_df.csv')  # Replace with actual data loading
-    Y_train = pd.read_csv('Y_train.csv')  # Replace with actual data loading
-    tree_pred = train_and_evaluate_models(X_train_scaled_df, Y_train)
-    
-    # Creating a DataFrame for predictions
-    tree_pred_df = pd.DataFrame(tree_pred, columns=Y_train.columns, index=Y_train.index)
-    
-    # Plot actual vs predicted votes
-    unique_electorates = Y_train['Electorate'].unique()
-    for electorate in unique_electorates:
-        plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
-
 # Run the app
 if __name__ == '__main__':
     main()
+
