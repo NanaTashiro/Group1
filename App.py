@@ -13,11 +13,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import leafmap.foliumap as leafmap
 
-# Define paths to the uploaded files
-combined_result_list_path = 'combined_result_list.csv'
-combined_all_demo_path = 'combined_all_demo.csv'
-election_poll_path = 'election_poll_2017_2024.csv'
-geo_info_path = 'Geo_info.csv'
 
 # Navigation
 st.sidebar.title("Navigation")
@@ -42,7 +37,7 @@ def show_Data_Collection_page():
     st.title("Data Collection")
 
     st.header("Election Results (List) of each electorate in Auckland region from 2017-2023")
-    combined_result_list = pd.read_csv(combined_result_list_path)
+    combined_result_list = pd.read_csv(combined_result_list)
     st.dataframe(combined_result_list)
 
     party_colors = {
@@ -84,7 +79,7 @@ def show_Data_Collection_page():
         st.error("The file 'combined_all_demo.csv' was not found. Please upload the file to proceed.")
     
     try:
-        Area_Coords = pd.read_csv(geo_info_path)
+        Area_Coords = pd.read_csv(Geo_info.csv)
         Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
                '30-64 years', '65 years and over', 'No qualification',
                'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
@@ -115,7 +110,7 @@ def show_Data_Collection_page():
 
     st.header("Polling data from 2017-2024")
     try:
-        election_poll_2017_2024 = pd.read_csv(election_poll_path)
+        election_poll_2017_2024 = pd.read_csv(election_poll_2017_2024)
         st.dataframe(election_poll_2017_2024)
 
         # Convert the notebook code into Streamlit interactive model
