@@ -211,7 +211,7 @@ def show_regression_page():
     - Mean Absolute Error: 4.163687333057046
     """)
 
-    image1 = Image.open('Regression_Model_Performance_Metrics.png')
+    image1 = Image.open('Regression Model Performance Metrics.png')
     st.image(image1, caption='Regression Model Performance Metrics', use_column_width=True)
 
     st.subheader("Feature Selection")
@@ -238,7 +238,7 @@ def show_regression_page():
     - Mean Absolute Error: 4.9548058986689805
     """)
 
-    image2 = Image.open('Metrics_after_Feature_Selection.png')
+    image2 = Image.open('Metrics after Feature Selection.png')
     st.image(image2, caption='Metrics after Feature Selection', use_column_width=True)
 
     st.title("Actual vs Predicted Model")
