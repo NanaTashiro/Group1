@@ -648,7 +648,8 @@ def show_nn_page():
             })
             comparison_df = pd.concat([comparison_df, temp_df], ignore_index=True)
         return comparison_df
-    
+    # Define subset_features at the top or within the function
+    subset_features = ['ACT New Zealand Vote', 'Green Party Vote', 'Labour Party Vote', 'National Party Vote', 'New Zealand First Party Vote', 'Others Vote']
     # Function to plot comparison for a single year using Plotly
     def plot_comparison(comparison_df, year, electorate):
         if comparison_df.empty:
