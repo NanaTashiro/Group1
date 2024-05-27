@@ -37,7 +37,7 @@ def show_Data_Collection_page():
     st.title("Data Collection")
 
     st.header("Election Results (List) of each electorate in Auckland region from 2017-2023")
-    combined_result_list = pd.read_csv(combined_result_list)
+    combined_result_list = pd.read_csv(combined_result_list.csv)
     st.dataframe(combined_result_list)
 
     party_colors = {
