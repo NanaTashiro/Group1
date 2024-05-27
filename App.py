@@ -13,10 +13,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import leafmap.foliumap as leafmap
 import plotly.graph_objects as go
+from PIL import Image
 
 # Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "KNN Regression", "Neural Network"])
+page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Regression Models",  "KNN Regression", "Neural Network"])
 
 def show_intro_page():
     st.title("Predicting Election Results (Party Lists) for the Auckland Region")
@@ -183,7 +184,71 @@ def show_Data_Collection_page():
         st.plotly_chart(fig)
     except FileNotFoundError:
         st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
-    
+
+def show_regression_page():
+    st.title("Linear, Polynomial, Decision Tree and Random Forest Regression")
+    st.subheader("First Try")
+
+    st.write("""
+    Random Forest Regressor:
+    - Mean Squared Error: 61.00338034404762
+    - R-squared: 0.43813108642746235
+    - Mean Absolute Error: 4.686294047619047
+
+    Decision Tree Regressor:
+    - Mean Squared Error: 102.93514940476187
+    - R-squared: -0.05440366853861641
+    - Mean Absolute Error: 5.632678571428571
+
+    Linear Regression:
+    - Mean Squared Error: 2.9921841476839266e+26
+    - R-squared: -1.5004313073007013e+25
+    - Mean Absolute Error: 7743677865302.306
+
+    Polynomial Regression:
+    - Mean Squared Error: 55.23818229929456
+    - R-squared: 0.36154597596526533
+    - Mean Absolute Error: 4.163687333057046
+    """)
+
+    image1 = Image.open('Regression_Model_Performance_Metrics.png')
+    st.image(image1, caption='Regression Model Performance Metrics', use_column_width=True)
+
+    st.subheader("Feature Selection")
+
+    st.write("""
+    Random Forest Regressor:
+    - Mean Squared Error: 61.529651116190486
+    - R-squared: 0.47229381455511765
+    - Mean Absolute Error: 4.648752380952382
+
+    Decision Tree Regressor:
+    - Mean Squared Error: 150.70449285714287
+    - R-squared: -0.3545009386089091
+    - Mean Absolute Error: 6.989404761904763
+
+    Linear Regression:
+    - Mean Squared Error: 300.8785321014947
+    - R-squared: -1.122585072938829
+    - Mean Absolute Error: 8.548956684528763
+
+    Polynomial Regression:
+    - Mean Squared Error: 64.62478041132772
+    - R-squared: 0.21470107103855648
+    - Mean Absolute Error: 4.9548058986689805
+    """)
+
+    image2 = Image.open('Metrics_after_Feature_Selection.png')
+    st.image(image2, caption='Metrics after Feature Selection', use_column_width=True)
+
+    st.title("Actual vs Predicted Model")
+
+    num_images = 21  
+    for i in range(num_images):
+        image_path = f'plot{i}.png'
+        image = Image.open(image_path)
+        st.image(image, caption=f'Plot {i}', use_column_width=True)
+        
         
 def show_knn_page():
     # Subset of features (party votes)
@@ -641,6 +706,8 @@ if page == "Introduction":
     show_intro_page()
 elif page == "Data Collection":
     show_Data_Collection_page()
+elif page == "Regression Models":
+    show_regression_page()
 elif page == "KNN Regression":
     show_knn_page()
 elif page == "Neural Network":
