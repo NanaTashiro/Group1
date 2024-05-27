@@ -14,29 +14,11 @@ import seaborn as sns
 import leafmap.foliumap as leafmap
 
 # Define paths to the uploaded files
-combined_result_list_path = '/mnt/data/combined_result_list.csv'
-combined_all_demo_path = '/mnt/data/combined_all_demo.csv'
-election_poll_path = '/mnt/data/election_poll_2017_2024.csv'
+combined_result_list_path = 'combined_result_list.csv'
+combined_all_demo_path = 'combined_all_demo.csv'
+election_poll_path = 'election_poll_2017_2024.csv'
 
 
-# Navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
-
-def show_intro_page():
-    st.title("Predicting Election Results (Party Lists) for the Auckland Region")
-    
-    st.header("Group 1")
-    st.write("""
-    - Nana (Nuthita) Tashiro, ID: 21016134
-    - Cole Palffy, ID: 18047471
-    - Nazgul Altynbekova, ID: 22012935
-    """)
-    
-    st.header("Research Question")
-    st.write("""
-    How can an integrated prediction model combining different techniques accurately predict the next election results of four major parties and others (ACT New Zealand, Green Party, Labour Party, National Party, Other) for every electorate within the Auckland region if the parliament were dissolved today?
-    """)
 # Navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
