@@ -186,124 +186,88 @@ def show_Data_Collection_page():
 
     
     
-def show_Linear_Polynomial_Decision_Tree_Random_Forest_Regression_page():
-    st.title('Linear, Polynomial, Decision Tree and Random Forest Regression')
+def show_regression_analysis_page():
+    st.title('Linear, Polynomial, Decision Tree, and Random Forest Regression')
 
-    # Model training and evaluation
     st.write('### Model Training and Evaluation')
-    X_train_scaled_df = pd.read_csv('X_train_scaled_df.csv')  # Replace with actual data loading
-    Y_train = pd.read_csv('Y_train.csv')  # Replace with actual data loading
+    
+    # Load and prepare data
+    X_train_scaled_df = pd.read_csv('X_train_scaled_df.csv')
+    Y_train = pd.read_csv('Y_train.csv')
+    
+    # Train and evaluate models
     tree_pred = train_and_evaluate_models(X_train_scaled_df, Y_train)
     
-    # Creating a DataFrame for predictions
+    # Convert predictions to DataFrame
     tree_pred_df = pd.DataFrame(tree_pred, columns=Y_train.columns, index=Y_train.index)
     
-    # Plot actual vs predicted votes
+    # Plot actual vs. predicted votes for each electorate and year
     unique_electorates = Y_train['Electorate'].unique()
     for electorate in unique_electorates:
         plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
-
+    
     st.write('### New Zealand Election Polling Data Analysis')
     st.write('This app visualizes the polling results of various political parties in New Zealand from 2017 to 2024.')
-
-    # Load data
-    df = load_data()
-
-    # Convert columns to numeric
-    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
-    for party in parties:
-        df[party] = pd.to_numeric(df[party], errors='coerce')
-
-    # Fill NaN values
-    df.fillna(method='ffill', inplace=True)
-
+    
+    # Load and process polling data
+    df = load_polling_data()
+    
     # Select parties to display
+    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
     selected_parties = st.multiselect('Select parties to display', options=parties, default=parties)
-
+    
     if selected_parties:
         plot_polling_results(df, selected_parties)
     else:
         st.write('Please select at least one party to display.')
 
-# Function to train and evaluate models
 def train_and_evaluate_models(X_train_scaled_df, Y_train):
-    # Decision Tree Regressor
-    tree_model = DecisionTreeRegressor(random_state=42)
-    tree_model.fit(X_train_scaled_df, Y_train)
-    tree_pred = tree_model.predict(X_train_scaled_df)
-    tree_mse = mean_squared_error(Y_train, tree_pred)
-    tree_r2 = r2_score(Y_train, tree_pred)
-    tree_mae = mean_absolute_error(Y_train, tree_pred)
-
-    st.write("Decision Tree Regressor:")
-    st.write("Mean Squared Error:", tree_mse)
-    st.write("R-squared:", tree_r2)
-    st.write("Mean Absolute Error:", tree_mae)
-    st.write("")
-
-    # Linear Regression
-    linear_model = LinearRegression()
-    linear_model.fit(X_train_scaled_df, Y_train)
-    linear_pred = linear_model.predict(X_train_scaled_df)
-    linear_mse = mean_squared_error(Y_train, linear_pred)
-    linear_r2 = r2_score(Y_train, linear_pred)
-    linear_mae = mean_absolute_error(Y_train, linear_pred)
-
-    st.write("Linear Regression:")
-    st.write("Mean Squared Error:", linear_mse)
-    st.write("R-squared:", linear_r2)
-    st.write("Mean Absolute Error:", linear_mae)
-    st.write("")
-
-    # Polynomial Regression
+    # Initialize models
+    models = {
+        'Decision Tree': DecisionTreeRegressor(random_state=42),
+        'Linear Regression': LinearRegression(),
+        'Polynomial Regression': LinearRegression(),
+        'Random Forest': RandomForestRegressor(n_estimators=50, random_state=42)
+    }
+    
+    # Polynomial features for Polynomial Regression
     poly_features = PolynomialFeatures(degree=2)
     X_train_poly = poly_features.fit_transform(X_train_scaled_df)
-    X_valid_poly = poly_features.transform(X_train_scaled_df)
+    
+    # Training and evaluation
+    for model_name, model in models.items():
+        if model_name == 'Polynomial Regression':
+            model.fit(X_train_poly, Y_train)
+            predictions = model.predict(X_train_poly)
+        else:
+            model.fit(X_train_scaled_df, Y_train)
+            predictions = model.predict(X_train_scaled_df)
+        
+        mse = mean_squared_error(Y_train, predictions)
+        r2 = r2_score(Y_train, predictions)
+        mae = mean_absolute_error(Y_train, predictions)
+        
+        st.write(f"{model_name}:")
+        st.write(f"Mean Squared Error: {mse}")
+        st.write(f"R-squared: {r2}")
+        st.write(f"Mean Absolute Error: {mae}")
+        st.write("")
+    
+    # Return predictions from Decision Tree Regressor for plotting
+    return models['Decision Tree'].predict(X_train_scaled_df)
 
-    poly_model = LinearRegression()
-    poly_model.fit(X_train_poly, Y_train)
-    poly_pred = poly_model.predict(X_valid_poly)
-    poly_mse = mean_squared_error(Y_train, poly_pred)
-    poly_r2 = r2_score(Y_train, poly_pred)
-    poly_mae = mean_absolute_error(Y_train, poly_pred)
-
-    st.write("Polynomial Regression:")
-    st.write("Mean Squared Error:", poly_mse)
-    st.write("R-squared:", poly_r2)
-    st.write("Mean Absolute Error:", poly_mae)
-    st.write("")
-
-    # Random Forest Regressor
-    model = RandomForestRegressor(n_estimators=50, random_state=42)
-    model.fit(X_train_scaled_df, Y_train)
-
-    y_pred = model.predict(X_train_scaled_df)
-    mae = mean_absolute_error(Y_train, y_pred)
-    rf_pred = model.predict(X_train_scaled_df)
-    rf_mse = mean_squared_error(Y_train, rf_pred)
-    rf_r2 = r2_score(Y_train, rf_pred)
-
-    st.write("Random Forest Regressor:")
-    st.write("Mean Squared Error:", rf_mse)
-    st.write("R-squared:", rf_r2)
-    st.write("Mean Absolute Error:", mae)
-    st.write("")
-
-    return tree_pred
-
-# Function to plot actual vs predicted votes
 def plot_actual_vs_predicted_by_electorate_year(electorate, year, actual_df, predicted_df):
     actual_data = actual_df[(actual_df['Electorate'] == electorate) & (actual_df['Election Year'] == year)]
     predicted_data = predicted_df[(predicted_df['Electorate'] == electorate) & (predicted_df['Election Year'] == year)]
-
+    
     if actual_data.empty or predicted_data.empty:
         st.write(f"No data available for {electorate} in {year}")
         return
-
+    
     actual_values = actual_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
     predicted_values = predicted_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
     parties = actual_data.columns[2:]  # Exclude 'Electorate' and 'Election Year'
-
+    
     plt.figure(figsize=(10, 6))
     x = np.arange(len(parties))
     plt.scatter(x, actual_values, color='blue', label='Actual', marker='o')
@@ -316,7 +280,6 @@ def plot_actual_vs_predicted_by_electorate_year(electorate, year, actual_df, pre
     plt.tight_layout()
     st.pyplot(plt)
 
-# Function to plot polling results over time
 def plot_polling_results(df, parties):
     plt.figure(figsize=(15, 8))
     for party in parties:
@@ -324,15 +287,19 @@ def plot_polling_results(df, parties):
     plt.title('Polling Results Over Time')
     plt.xlabel('Date')
     plt.ylabel('Polling Percentage')
-    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))  # Move the legend outside the plot
-    plt.tight_layout()  # Adjust subplots to fit into the figure area.
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
     st.pyplot(plt)
 
-# Load data
 @st.cache_data
-def load_data():
+def load_polling_data():
     election_poll_2017_2024 = pd.read_csv('election_poll_2017_2024.csv', index_col='Date', parse_dates=True)
+    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
+    for party in parties:
+        election_poll_2017_2024[party] = pd.to_numeric(election_poll_2017_2024[party], errors='coerce')
+    election_poll_2017_2024.fillna(method='ffill', inplace=True)
     return election_poll_2017_2024
+
     
 def show_knn_page():
     # Subset of features (party votes)
@@ -791,7 +758,7 @@ if page == "Introduction":
 elif page == "Data Collection":
     show_Data_Collection_page()
 elif page == "Linear, Polynomial, Decision Tree, Random Forest Regression":
-    show_Linear_Polynomial_Decision_Tree_Random_Forest_Regression_page()
+    show_regression_analysis_page()
 elif page == "KNN Regression":
     show_knn_page()
 elif page == "Neural Network":
