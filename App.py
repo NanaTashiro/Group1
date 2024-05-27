@@ -228,6 +228,15 @@ def show_regression_analysis_page():
     X_test_scaled_df['Electorate'] = prediction_data['Electorate'].values
     X_test_scaled_df['Election Year'] = prediction_data['Election Year'].values
 
+    # Check if the necessary columns are present
+    if 'Election Year' not in X_train_scaled_df.columns or 'Electorate' not in X_train_scaled_df.columns:
+        st.error("Columns 'Election Year' and 'Electorate' are missing in the training DataFrame.")
+        return
+
+    if 'Election Year' not in Y_train.columns or 'Electorate' not in Y_train.columns:
+        st.error("Columns 'Election Year' and 'Electorate' are missing in the target DataFrame.")
+        return
+
     # Merging data
     merged_data = pd.merge(X_train_scaled_df, Y_train, on=["Election Year", "Electorate"])
     X = merged_data.drop(columns=["Election Year", "Electorate", "ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"])
@@ -351,7 +360,7 @@ def show_regression_analysis_page():
     fig2.suptitle('Metrics after Feature Selection', y=1.05)
     st.pyplot(fig2)
 
-    # Function to plot actual vs predicted values by electorate and year
+    # Helper function to plot actual vs. predicted values
     def plot_actual_vs_predicted_by_electorate_year(electorate, year, actual_df, predicted_df):
         actual_data = actual_df[(actual_df['Electorate'] == electorate) & (actual_df['Election Year'] == year)]
         predicted_data = predicted_df[(predicted_df['Electorate'] == electorate) & (predicted_df['Election Year'] == year)]
