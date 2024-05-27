@@ -11,10 +11,17 @@ from sklearn.ensemble import RandomForestRegressor
 from math import sqrt
 import matplotlib.pyplot as plt
 import seaborn as sns
+import leafmap.foliumap as leafmap
+
+# Define paths to the uploaded files
+combined_result_list_path = '/mnt/data/combined_result_list.csv'
+combined_all_demo_path = '/mnt/data/combined_all_demo.csv'
+election_poll_path = '/mnt/data/election_poll_2017_2024.csv'
+
 
 # Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Introduction", "Linear, Polynomial, Multiple Regression Model", "KNN Model", "Neural Network Model"])
+page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
 
 def show_intro_page():
     st.title("Predicting Election Results (Party Lists) for the Auckland Region")
@@ -22,7 +29,25 @@ def show_intro_page():
     st.header("Group 1")
     st.write("""
     - Nana (Nuthita) Tashiro, ID: 21016134
-    - Cole
+    - Cole Palffy, ID: 18047471
+    - Nazgul Altynbekova, ID: 22012935
+    """)
+    
+    st.header("Research Question")
+    st.write("""
+    How can an integrated prediction model combining different techniques accurately predict the next election results of four major parties and others (ACT New Zealand, Green Party, Labour Party, National Party, Other) for every electorate within the Auckland region if the parliament were dissolved today?
+    """)
+# Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
+
+def show_intro_page():
+    st.title("Predicting Election Results (Party Lists) for the Auckland Region")
+    
+    st.header("Group 1")
+    st.write("""
+    - Nana (Nuthita) Tashiro, ID: 21016134
+    - Cole Palffy, ID: 18047471
     - Nazgul Altynbekova, ID: 22012935
     """)
     
@@ -31,8 +56,134 @@ def show_intro_page():
     How can an integrated prediction model combining different techniques accurately predict the next election results of four major parties and others (ACT New Zealand, Green Party, Labour Party, National Party, Other) for every electorate within the Auckland region if the parliament were dissolved today?
     """)
 
-def show_linear_polynomial_multiple_regression_page():
-    st.title('Linear, Polynomial, Multiple Regression Model')
+def show_Data_Collection_page():
+    st.title("Data Collection")
+
+    st.header("Election Results (List) of each electorate in Auckland region from 2017-2023")
+    combined_result_list = pd.read_csv(combined_result_list_path)
+    st.dataframe(combined_result_list)
+
+    # Plotting the general trend of past 3 years elections of lists in Auckland Region
+    party_colors = {
+        'ACT New Zealand Vote': 'yellow',
+        'Green Party Vote': 'green',
+        'Labour Party Vote': 'red',
+        'National Party Vote': 'blue',
+        'New Zealand First Party Vote': 'black',
+        'Others Vote': 'grey'
+    }
+    
+    party_votes_corrected = combined_result_list.groupby('Election Year').mean(numeric_only=True)
+    
+    plt.figure(figsize=(12, 8))
+    for column in party_votes_corrected.columns:
+        plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
+    
+    plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
+    plt.xlabel('Election Year')
+    plt.ylabel('Average Party Vote by Percentage')
+    plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.axhline(0, color='black', linewidth=0.5)
+    plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    st.pyplot(plt)
+
+    st.header("Demographic Data of all electorates from 2017-2024")
+    combined_all_demo = pd.read_csv(combined_all_demo_path)
+    st.dataframe(combined_all_demo)
+    
+    Area_Coords = pd.read_csv(r"Geo_info.csv")
+    Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
+           '30-64 years', '65 years and over', 'No qualification',
+           'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
+           'Bachelor degree and level 7 qualification',
+           'Post-graduate and honours degrees', 'Masters degree',
+           'Doctorate degree',
+           'European', 'Maori',
+           'Pacific Peoples', 'Asian', 'Middle Eastern/Latin American/African',
+           'Other ethnicity', 'Regular smoker', 'Ex-smoker',
+           'Never smoked regularly', 'No dependent children',
+           'One dependent child', 'Two dependent children',
+           'Three dependent children', 'Four or more dependent children',
+           'Total people - with at least one religious affiliation', 'No religion']]
+
+    st.title("Marker Cluster")
+    m = leafmap.Map(center=[-36.8, 175], zoom=8.5)
+    m.add_points_from_xy(
+        Area_Coords,
+        x="Longitude",
+        y="Latitude",
+        icon_names=['gear', 'map', 'leaf', 'globe'],
+        spin=True,
+        add_legend=True,
+    )
+    m.to_streamlit(height=650)
+
+    st.header("Polling data from 2017-2024")
+    election_poll_2017_2024 = pd.read_csv(election_poll_path)
+    st.dataframe(election_poll_2017_2024)
+
+    # Convert the notebook code into Streamlit interactive model
+    election_poll_2017_2024['Date'] = pd.to_datetime(election_poll_2017_2024['Date'])
+    election_poll_2017_2024.sort_values(by='Date', inplace=True)
+
+    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
+    for party in parties:
+        election_poll_2017_2024[f'{party} Change'] = election_poll_2017_2024[party].diff()
+
+    key_events = pd.read_csv("key_events.csv")
+    key_events['Date'] = pd.to_datetime(key_events['Date'])
+    key_events.sort_values(by='Date', inplace=True)
+
+    significant_changes = election_poll_2017_2024.melt(id_vars=['Date', 'Poll'], 
+                                                       value_vars=[f'{party} Change' for party in parties], 
+                                                       var_name='Party', 
+                                                       value_name='Change')
+    significant_changes = significant_changes[significant_changes['Change'].abs() > 5]
+    impactful_events = []
+
+    for _, row in significant_changes.iterrows():
+        event_window_start = row['Date'] - pd.Timedelta(days=7)
+        event_window_end = row['Date']
+        
+        relevant_events = key_events[(key_events['Date'] >= event_window_start) & (key_events['Date'] <= event_window_end)]
+        
+        for _, event_info in relevant_events.iterrows():
+            impactful_events.append({
+                'Date': row['Date'],
+                'Party': row['Party'].replace(' Change', ''),
+                'Change': row['Change'],
+                'Event Date': event_info['Date'],
+                'Event': event_info['Event']
+            })
+
+    impactful_events_df = pd.DataFrame(impactful_events)
+    impactful_events_df['Event Date'] = pd.to_datetime(impactful_events_df['Event Date'])
+    combined_events = impactful_events_df.groupby(['Event Date', 'Event']).apply(lambda df: ', '.join([f"{row['Party']} ({row['Change']:+.1f}%)" for _, row in df.iterrows()])).reset_index()
+    combined_events.columns = ['Event Date', 'Event', 'Impact']
+    
+    plt.figure(figsize=(15, 8))
+    for party in parties:
+        plt.plot(election_poll_2017_2024['Date'], election_poll_2017_2024[party], label=party)
+    
+    for _, row in impactful_events_df.iterrows():
+        plt.axvline(x=row['Date'], color='gray', linestyle='--', linewidth=0.5)
+        plt.scatter(row['Date'], election_poll_2017_2024.loc[election_poll_2017_2024['Date'] == row['Date'], row['Party']].values[0], color='red', zorder=5)
+    
+    plt.title('Polling Results with Changes > 5%')
+    plt.xlabel('Date')
+    plt.ylabel('Polling Percentage')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(plt)
+    
+
+    
+    
+def show_Linear_Polynomial_Decision_Tree_Random_Forest_Regression_page():
+    st.title('Linear, Polynomial, Decision Tree and Random Forest Regression)
 
     # Model training and evaluation
     st.write('### Model Training and Evaluation')
@@ -633,9 +784,11 @@ def show_nn_page():
 # Display the selected page
 if page == "Introduction":
     show_intro_page()
-elif page == "Linear, Polynomial, Multiple Regression Model":
-    show_linear_polynomial_multiple_regression_page()
-elif page == "KNN Model":
+elif page == "Data Collection":
+    show_Data_Collection_page()
+elif page == "Linear, Polynomial, Decision Tree, Random Forest Regression":
+    show_Linear_Polynomial_Decision_Tree_Random_Forest_Regression_page()
+elif page == "KNN Regression":
     show_knn_page()
-elif page == "Neural Network Model":
+elif page == "Neural Network":
     show_nn_page()
