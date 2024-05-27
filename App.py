@@ -185,120 +185,180 @@ def show_Data_Collection_page():
         st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
 
     
-    
 def show_regression_analysis_page():
     st.title('Linear, Polynomial, Decision Tree, and Random Forest Regression')
 
     st.write('### Model Training and Evaluation')
     
     # Load and prepare data
-    X_train_scaled_df = pd.read_csv('X_train_scaled_df.csv')
-    Y_train = pd.read_csv('Y_train.csv')
-    
-    # Train and evaluate models
-    tree_pred = train_and_evaluate_models(X_train_scaled_df, Y_train)
-    
-    # Convert predictions to DataFrame
-    tree_pred_df = pd.DataFrame(tree_pred, columns=Y_train.columns, index=Y_train.index)
-    
-    # Plot actual vs. predicted votes for each electorate and year
-    unique_electorates = Y_train['Electorate'].unique()
-    for electorate in unique_electorates:
-        plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
-    
-    st.write('### New Zealand Election Polling Data Analysis')
-    st.write('This app visualizes the polling results of various political parties in New Zealand from 2017 to 2024.')
-    
-    # Load and process polling data
-    df = load_polling_data()
-    
-    # Select parties to display
-    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
-    selected_parties = st.multiselect('Select parties to display', options=parties, default=parties)
-    
-    if selected_parties:
-        plot_polling_results(df, selected_parties)
-    else:
-        st.write('Please select at least one party to display.')
+    try:
+        # Convert scaled datasets into dataframes
+        X_train_scaled_df = pd.DataFrame(X_train_scaled, columns=X_train_model.columns)
+        X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=X_test_model.columns)
 
-def train_and_evaluate_models(X_train_scaled_df, Y_train):
-    # Initialize models
-    models = {
-        'Decision Tree': DecisionTreeRegressor(random_state=42),
-        'Linear Regression': LinearRegression(),
-        'Polynomial Regression': LinearRegression(),
-        'Random Forest': RandomForestRegressor(n_estimators=50, random_state=42)
-    }
-    
-    # Polynomial features for Polynomial Regression
-    poly_features = PolynomialFeatures(degree=2)
-    X_train_poly = poly_features.fit_transform(X_train_scaled_df)
-    
-    # Training and evaluation
-    for model_name, model in models.items():
-        if model_name == 'Polynomial Regression':
-            model.fit(X_train_poly, Y_train)
-            predictions = model.predict(X_train_poly)
-        else:
-            model.fit(X_train_scaled_df, Y_train)
-            predictions = model.predict(X_train_scaled_df)
-        
-        mse = mean_squared_error(Y_train, predictions)
-        r2 = r2_score(Y_train, predictions)
-        mae = mean_absolute_error(Y_train, predictions)
-        
-        st.write(f"{model_name}:")
-        st.write(f"Mean Squared Error: {mse}")
-        st.write(f"R-squared: {r2}")
-        st.write(f"Mean Absolute Error: {mae}")
-        st.write("")
-    
-    # Return predictions from Decision Tree Regressor for plotting
-    return models['Decision Tree'].predict(X_train_scaled_df)
+        # Put back Electorate and Election Year columns
+        X_train_scaled_df['Electorate'] = X_train['Electorate']
+        X_train_scaled_df['Election Year'] = X_train['Election Year']
+        X_test_scaled_df['Electorate'] = X_test['Electorate']
 
-def plot_actual_vs_predicted_by_electorate_year(electorate, year, actual_df, predicted_df):
-    actual_data = actual_df[(actual_df['Electorate'] == electorate) & (actual_df['Election Year'] == year)]
-    predicted_data = predicted_df[(predicted_df['Electorate'] == electorate) & (predicted_df['Election Year'] == year)]
-    
-    if actual_data.empty or predicted_data.empty:
-        st.write(f"No data available for {electorate} in {year}")
-        return
-    
-    actual_values = actual_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
-    predicted_values = predicted_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
-    parties = actual_data.columns[2:]  # Exclude 'Electorate' and 'Election Year'
-    
-    plt.figure(figsize=(10, 6))
-    x = np.arange(len(parties))
-    plt.scatter(x, actual_values, color='blue', label='Actual', marker='o')
-    plt.scatter(x, predicted_values, color='red', label='Predicted', marker='x')
-    plt.title(f"Actual vs. Predicted Votes for {electorate} - {year}")
-    plt.xlabel("Party")
-    plt.ylabel("Votes")
-    plt.xticks(x, parties, rotation=45)
-    plt.legend()
-    plt.tight_layout()
-    st.pyplot(plt)
+        # Merging the data to split it after
+        merged_data = pd.merge(X_train_scaled_df, Y_train, on=["Election Year", "Electorate"])
 
-def plot_polling_results(df, parties):
-    plt.figure(figsize=(15, 8))
-    for party in parties:
-        plt.plot(df.index, df[party], label=party)
-    plt.title('Polling Results Over Time')
-    plt.xlabel('Date')
-    plt.ylabel('Polling Percentage')
-    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    plt.tight_layout()
-    st.pyplot(plt)
+        # Split data into features and target variables
+        X = merged_data.drop(columns=["Election Year", "Electorate", "ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"])
+        y = merged_data[["ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"]]
 
-@st.cache_data
-def load_polling_data():
-    election_poll_2017_2024 = pd.read_csv('election_poll_2017_2024.csv', index_col='Date', parse_dates=True)
-    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
-    for party in parties:
-        election_poll_2017_2024[party] = pd.to_numeric(election_poll_2017_2024[party], errors='coerce')
-    election_poll_2017_2024.fillna(method='ffill', inplace=True)
-    return election_poll_2017_2024
+        # Split data into training and validation sets
+        X_ftrain_final, X_ftest_final, Y_ftrain_final, Y_ftest_final = train_test_split(X, y, test_size=0.4, random_state=42)
+
+        # Train and evaluate models
+        models = {
+            "Random Forest Regressor": RandomForestRegressor(n_estimators=50, random_state=42),
+            "Decision Tree Regressor": DecisionTreeRegressor(random_state=42),
+            "Linear Regression": LinearRegression(),
+            "Polynomial Regression": PolynomialFeatures(degree=2)
+        }
+
+        results = {}
+        for name, model in models.items():
+            if name == "Polynomial Regression":
+                X_train_poly = model.fit_transform(X_ftrain_final)
+                X_valid_poly = model.transform(X_ftest_final)
+                lin_model = LinearRegression()
+                lin_model.fit(X_train_poly, Y_ftrain_final)
+                predictions = lin_model.predict(X_valid_poly)
+            else:
+                model.fit(X_ftrain_final, Y_ftrain_final)
+                predictions = model.predict(X_ftest_final)
+
+            mse = mean_squared_error(Y_ftest_final, predictions)
+            r2 = r2_score(Y_ftest_final, predictions)
+            mae = mean_absolute_error(Y_ftest_final, predictions)
+            results[name] = {"MSE": mse, "R-squared": r2, "MAE": mae}
+
+        # Display the results in Streamlit
+        st.write("### Model Performance Metrics")
+        metrics_df = pd.DataFrame(results).T
+        st.dataframe(metrics_df)
+
+        # Plotting the metrics
+        st.write("### Metrics Visualization")
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+        axes[0].bar(models.keys(), metrics_df["MSE"], color='blue')
+        axes[0].set_title('Mean Squared Error')
+        axes[0].set_ylabel('MSE')
+        axes[0].set_yscale('log')  # Use logarithmic scale due to the large range in MSE values
+        axes[0].tick_params(axis='x', rotation=45)
+
+        axes[1].bar(models.keys(), metrics_df["R-squared"], color='green')
+        axes[1].set_title('R-squared')
+        axes[1].set_ylabel('R-squared')
+        axes[1].tick_params(axis='x', rotation=45)
+
+        axes[2].bar(models.keys(), metrics_df["MAE"], color='red')
+        axes[2].set_title('Mean Absolute Error')
+        axes[2].set_ylabel('MAE')
+        axes[2].set_yscale('log')  # Use logarithmic scale due to the large range in MAE values
+        axes[2].tick_params(axis='x', rotation=45)
+
+        fig.suptitle('Regression Model Performance Metrics', y=1.05)
+        st.pyplot(fig)
+
+        # Feature selection based on correlation
+        st.write("### Feature Selection Based on Correlation")
+        selected_features_dict = {}
+        for party in Y_ftrain_final.columns:
+            combined_data = pd.concat([X_ftrain_final, Y_ftrain_final[party]], axis=1)
+            corr_matrix = combined_data.corr()
+            selected_features_corr = corr_matrix[party].abs().sort_values(ascending=False).head(10).index.tolist()
+            selected_features_dict[party] = selected_features_corr
+
+        selected_features = list(set([feature for party_features in selected_features_dict.values() for feature in party_features if feature in X_ftrain_final.columns]))
+
+        X_train_selected = X_ftrain_final[selected_features]
+        X_test_selected = X_ftest_final[selected_features]
+
+        # Train and evaluate models after feature selection
+        results_after_selection = {}
+        for name, model in models.items():
+            if name == "Polynomial Regression":
+                X_train_poly = model.fit_transform(X_train_selected)
+                X_valid_poly = model.transform(X_test_selected)
+                lin_model = LinearRegression()
+                lin_model.fit(X_train_poly, Y_ftrain_final)
+                predictions = lin_model.predict(X_valid_poly)
+            else:
+                model.fit(X_train_selected, Y_ftrain_final)
+                predictions = model.predict(X_test_selected)
+
+            mse = mean_squared_error(Y_ftest_final, predictions)
+            r2 = r2_score(Y_ftest_final, predictions)
+            mae = mean_absolute_error(Y_ftest_final, predictions)
+            results_after_selection[name] = {"MSE": mse, "R-squared": r2, "MAE": mae}
+
+        # Display the results after feature selection in Streamlit
+        st.write("### Results after Feature Selection")
+        metrics_df_after_selection = pd.DataFrame(results_after_selection).T
+        st.dataframe(metrics_df_after_selection)
+
+        # Plotting the metrics after feature selection
+        st.write("### Metrics after Feature Selection")
+        fig2, axes2 = plt.subplots(1, 3, figsize=(15, 5))
+
+        axes2[0].bar(models.keys(), metrics_df_after_selection["MSE"], color='blue')
+        axes2[0].set_title('Mean Squared Error')
+        axes2[0].set_ylabel('MSE')
+        axes2[0].set_yscale('log')  # Use logarithmic scale due to the large range in MSE values
+        axes2[0].tick_params(axis='x', rotation=45)
+
+        axes2[1].bar(models.keys(), metrics_df_after_selection["R-squared"], color='green')
+        axes2[1].set_title('R-squared')
+        axes2[1].set_ylabel('R-squared')
+        axes2[1].tick_params(axis='x', rotation=45)
+
+        axes2[2].bar(models.keys(), metrics_df_after_selection["MAE"], color='red')
+        axes2[2].set_title('Mean Absolute Error')
+        axes2[2].set_ylabel('MAE')
+        axes2[2].set_yscale('log')  # Use logarithmic scale due to the large range in MAE values
+        axes2[2].tick_params(axis='x', rotation=45)
+
+        fig2.suptitle('Metrics after Feature Selection', y=1.05)
+        st.pyplot(fig2)
+
+        # Function to plot actual vs predicted values by electorate and year
+        def plot_actual_vs_predicted_by_electorate_year(electorate, year, actual_df, predicted_df):
+            actual_data = actual_df[(actual_df['Electorate'] == electorate) & (actual_df['Election Year'] == year)]
+            predicted_data = predicted_df[(predicted_df['Electorate'] == electorate) & (predicted_df['Election Year'] == year)]
+
+            if actual_data.empty or predicted_data.empty:
+                st.write(f"No data available for {electorate} in {year}")
+                return
+
+            actual_values = actual_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
+            predicted_values = predicted_data.values[0][2:]  # Exclude 'Electorate' and 'Election Year'
+            parties = actual_data.columns[2:]  # Exclude 'Electorate' and 'Election Year'
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            x = np.arange(len(parties))
+            ax.scatter(x, actual_values, color='blue', label='Actual', marker='o')
+            ax.scatter(x, predicted_values, color='red', label='Predicted', marker='x')
+            ax.set_title(f"Actual vs. Predicted Votes for {electorate} - {year}")
+            ax.set_xlabel("Party")
+            ax.set_ylabel("Votes")
+            ax.set_xticks(x)
+            ax.set_xticklabels(parties, rotation=45)
+            ax.legend()
+            st.pyplot(fig)
+
+        # Plot actual vs predicted for each electorate in the year 2017
+        st.write("### Actual vs. Predicted Votes for 2017")
+        unique_electorates = Y_train['Electorate'].unique()
+        for electorate in unique_electorates:
+            plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, Y_train)  # Adjusted to match data used
+
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
 
     
 def show_knn_page():
