@@ -17,7 +17,7 @@ import leafmap.foliumap as leafmap
 combined_result_list_path = 'combined_result_list.csv'
 combined_all_demo_path = 'combined_all_demo.csv'
 election_poll_path = 'election_poll_2017_2024.csv'
-
+geo_info_path = 'Geo_info.csv'
 
 # Navigation
 st.sidebar.title("Navigation")
@@ -77,96 +77,104 @@ def show_Data_Collection_page():
 
     
     st.header("Demographic Data of all electorates from 2017-2024")
-    combined_all_demo = pd.read_csv(combined_all_demo_path)
-    st.dataframe(combined_all_demo)
+    try:
+        combined_all_demo = pd.read_csv(combined_all_demo_path)
+        st.dataframe(combined_all_demo)
+    except FileNotFoundError:
+        st.error("The file 'combined_all_demo.csv' was not found. Please upload the file to proceed.")
     
-    Area_Coords = pd.read_csv(r"Geo_info.csv")
-    Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
-           '30-64 years', '65 years and over', 'No qualification',
-           'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
-           'Bachelor degree and level 7 qualification',
-           'Post-graduate and honours degrees', 'Masters degree',
-           'Doctorate degree',
-           'European', 'Maori',
-           'Pacific Peoples', 'Asian', 'Middle Eastern/Latin American/African',
-           'Other ethnicity', 'Regular smoker', 'Ex-smoker',
-           'Never smoked regularly', 'No dependent children',
-           'One dependent child', 'Two dependent children',
-           'Three dependent children', 'Four or more dependent children',
-           'Total people - with at least one religious affiliation', 'No religion']]
+    try:
+        Area_Coords = pd.read_csv(geo_info_path)
+        Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
+               '30-64 years', '65 years and over', 'No qualification',
+               'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
+               'Bachelor degree and level 7 qualification',
+               'Post-graduate and honours degrees', 'Masters degree',
+               'Doctorate degree',
+               'European', 'Maori',
+               'Pacific Peoples', 'Asian', 'Middle Eastern/Latin American/African',
+               'Other ethnicity', 'Regular smoker', 'Ex-smoker',
+               'Never smoked regularly', 'No dependent children',
+               'One dependent child', 'Two dependent children',
+               'Three dependent children', 'Four or more dependent children',
+               'Total people - with at least one religious affiliation', 'No religion']]
 
-    st.title("Marker Cluster")
-    m = leafmap.Map(center=[-36.8, 175], zoom=8.5)
-    m.add_points_from_xy(
-        Area_Coords,
-        x="Longitude",
-        y="Latitude",
-        icon_names=['gear', 'map', 'leaf', 'globe'],
-        spin=True,
-        add_legend=True,
-    )
-    m.to_streamlit(height=650)
+        st.title("Marker Cluster")
+        m = leafmap.Map(center=[-36.8, 175], zoom=8.5)
+        m.add_points_from_xy(
+            Area_Coords,
+            x="Longitude",
+            y="Latitude",
+            icon_names=['gear', 'map', 'leaf', 'globe'],
+            spin=True,
+            add_legend=True,
+        )
+        m.to_streamlit(height=650)
+    except FileNotFoundError:
+        st.error("The file 'Geo_info.csv' was not found. Please upload the file to proceed.")
 
     st.header("Polling data from 2017-2024")
-    election_poll_2017_2024 = pd.read_csv(election_poll_path)
-    st.dataframe(election_poll_2017_2024)
+    try:
+        election_poll_2017_2024 = pd.read_csv(election_poll_path)
+        st.dataframe(election_poll_2017_2024)
 
-    # Convert the notebook code into Streamlit interactive model
-    election_poll_2017_2024['Date'] = pd.to_datetime(election_poll_2017_2024['Date'])
-    election_poll_2017_2024.sort_values(by='Date', inplace=True)
+        # Convert the notebook code into Streamlit interactive model
+        election_poll_2017_2024['Date'] = pd.to_datetime(election_poll_2017_2024['Date'])
+        election_poll_2017_2024.sort_values(by='Date', inplace=True)
 
-    parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
-    for party in parties:
-        election_poll_2017_2024[f'{party} Change'] = election_poll_2017_2024[party].diff()
+        parties = ['National Party', 'Labour Party', 'Green Party', 'New Zealand First Party', 'ACT New Zealand', 'Other']
+        for party in parties:
+            election_poll_2017_2024[f'{party} Change'] = election_poll_2017_2024[party].diff()
 
-    key_events = pd.read_csv("key_events.csv")
-    key_events['Date'] = pd.to_datetime(key_events['Date'])
-    key_events.sort_values(by='Date', inplace=True)
+        key_events = pd.read_csv("key_events.csv")
+        key_events['Date'] = pd.to_datetime(key_events['Date'])
+        key_events.sort_values(by='Date', inplace=True)
 
-    significant_changes = election_poll_2017_2024.melt(id_vars=['Date', 'Poll'], 
-                                                       value_vars=[f'{party} Change' for party in parties], 
-                                                       var_name='Party', 
-                                                       value_name='Change')
-    significant_changes = significant_changes[significant_changes['Change'].abs() > 5]
-    impactful_events = []
+        significant_changes = election_poll_2017_2024.melt(id_vars=['Date', 'Poll'], 
+                                                           value_vars=[f'{party} Change' for party in parties], 
+                                                           var_name='Party', 
+                                                           value_name='Change')
+        significant_changes = significant_changes[significant_changes['Change'].abs() > 5]
+        impactful_events = []
 
-    for _, row in significant_changes.iterrows():
-        event_window_start = row['Date'] - pd.Timedelta(days=7)
-        event_window_end = row['Date']
+        for _, row in significant_changes.iterrows():
+            event_window_start = row['Date'] - pd.Timedelta(days=7)
+            event_window_end = row['Date']
+            
+            relevant_events = key_events[(key_events['Date'] >= event_window_start) & (key_events['Date'] <= event_window_end)]
+            
+            for _, event_info in relevant_events.iterrows():
+                impactful_events.append({
+                    'Date': row['Date'],
+                    'Party': row['Party'].replace(' Change', ''),
+                    'Change': row['Change'],
+                    'Event Date': event_info['Date'],
+                    'Event': event_info['Event']
+                })
+
+        impactful_events_df = pd.DataFrame(impactful_events)
+        impactful_events_df['Event Date'] = pd.to_datetime(impactful_events_df['Event Date'])
+        combined_events = impactful_events_df.groupby(['Event Date', 'Event']).apply(lambda df: ', '.join([f"{row['Party']} ({row['Change']:+.1f}%)" for _, row in df.iterrows()])).reset_index()
+        combined_events.columns = ['Event Date', 'Event', 'Impact']
         
-        relevant_events = key_events[(key_events['Date'] >= event_window_start) & (key_events['Date'] <= event_window_end)]
+        plt.figure(figsize=(15, 8))
+        for party in parties:
+            plt.plot(election_poll_2017_2024['Date'], election_poll_2017_2024[party], label=party)
         
-        for _, event_info in relevant_events.iterrows():
-            impactful_events.append({
-                'Date': row['Date'],
-                'Party': row['Party'].replace(' Change', ''),
-                'Change': row['Change'],
-                'Event Date': event_info['Date'],
-                'Event': event_info['Event']
-            })
-
-    impactful_events_df = pd.DataFrame(impactful_events)
-    impactful_events_df['Event Date'] = pd.to_datetime(impactful_events_df['Event Date'])
-    combined_events = impactful_events_df.groupby(['Event Date', 'Event']).apply(lambda df: ', '.join([f"{row['Party']} ({row['Change']:+.1f}%)" for _, row in df.iterrows()])).reset_index()
-    combined_events.columns = ['Event Date', 'Event', 'Impact']
-    
-    plt.figure(figsize=(15, 8))
-    for party in parties:
-        plt.plot(election_poll_2017_2024['Date'], election_poll_2017_2024[party], label=party)
-    
-    for _, row in impactful_events_df.iterrows():
-        plt.axvline(x=row['Date'], color='gray', linestyle='--', linewidth=0.5)
-        plt.scatter(row['Date'], election_poll_2017_2024.loc[election_poll_2017_2024['Date'] == row['Date'], row['Party']].values[0], color='red', zorder=5)
-    
-    plt.title('Polling Results with Changes > 5%')
-    plt.xlabel('Date')
-    plt.ylabel('Polling Percentage')
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    plt.grid(True)
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(plt)
-    
+        for _, row in impactful_events_df.iterrows():
+            plt.axvline(x=row['Date'], color='gray', linestyle='--', linewidth=0.5)
+            plt.scatter(row['Date'], election_poll_2017_2024.loc[election_poll_2017_2024['Date'] == row['Date'], row['Party']].values[0], color='red', zorder=5)
+        
+        plt.title('Polling Results with Changes > 5%')
+        plt.xlabel('Date')
+        plt.ylabel('Polling Percentage')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.grid(True)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        st.pyplot(plt)
+    except FileNotFoundError:
+        st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file
 
     
     
