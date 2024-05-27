@@ -258,7 +258,11 @@ def show_regression_analysis_page():
     y = merged_data[["ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"]]
 
     # Split data into training and validation sets
-    X_ftrain_final, X_ftest_final, Y_ftrain_final, Y_ftest_final = train_test_split(X, y, test_size=0.4, random_state=42)
+    try:
+        X_ftrain_final, X_ftest_final, Y_ftrain_final, Y_ftest_final = train_test_split(X, y, test_size=0.4, random_state=42)
+    except ValueError as e:
+        st.error(f"Error in train_test_split: {e}")
+        return
 
     # Debugging: Check the shapes of the datasets
     st.write("X_ftrain_final shape:", X_ftrain_final.shape)
