@@ -73,7 +73,7 @@ def show_Data_Collection_page():
     
     st.header("Demographic Data of all electorates from 2017-2024")
     try:
-        combined_all_demo = pd.read_csv(combined_all_demo_path)
+        combined_all_demo = pd.read_csv(combined_all_demo.csv)
         st.dataframe(combined_all_demo)
     except FileNotFoundError:
         st.error("The file 'combined_all_demo.csv' was not found. Please upload the file to proceed.")
@@ -110,7 +110,7 @@ def show_Data_Collection_page():
 
     st.header("Polling data from 2017-2024")
     try:
-        election_poll_2017_2024 = pd.read_csv(election_poll_2017_2024)
+        election_poll_2017_2024 = pd.read_csv(election_poll_2017_2024.csv)
         st.dataframe(election_poll_2017_2024)
 
         # Convert the notebook code into Streamlit interactive model
