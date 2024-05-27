@@ -71,15 +71,15 @@ def show_Data_Collection_page():
         st.write("Please select at least one party to visualize.")
 
     
-    st.header("Demographic Data of all electorates from 2017-2024")
+        st.header("Demographic Data of all electorates from 2017-2024")
     try:
-        combined_all_demo = pd.read_csv(combined_all_demo.csv)
+        combined_all_demo = pd.read_csv('/mnt/data/combined_all_demo.csv')
         st.dataframe(combined_all_demo)
     except FileNotFoundError:
         st.error("The file 'combined_all_demo.csv' was not found. Please upload the file to proceed.")
     
     try:
-        Area_Coords = pd.read_csv(Geo_info.csv)
+        Area_Coords = pd.read_csv('/mnt/data/Geo_info.csv')
         Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
                '30-64 years', '65 years and over', 'No qualification',
                'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
@@ -110,7 +110,7 @@ def show_Data_Collection_page():
 
     st.header("Polling data from 2017-2024")
     try:
-        election_poll_2017_2024 = pd.read_csv(election_poll_2017_2024.csv)
+        election_poll_2017_2024 = pd.read_csv('/mnt/data/election_poll_2017_2024.csv')
         st.dataframe(election_poll_2017_2024)
 
         # Convert the notebook code into Streamlit interactive model
@@ -121,7 +121,7 @@ def show_Data_Collection_page():
         for party in parties:
             election_poll_2017_2024[f'{party} Change'] = election_poll_2017_2024[party].diff()
 
-        key_events = pd.read_csv("key_events.csv")
+        key_events = pd.read_csv("/mnt/data/key_events.csv")
         key_events['Date'] = pd.to_datetime(key_events['Date'])
         key_events.sort_values(by='Date', inplace=True)
 
@@ -169,7 +169,7 @@ def show_Data_Collection_page():
         plt.tight_layout()
         st.pyplot(plt)
     except FileNotFoundError:
-        st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file
+        st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
 
     
     
