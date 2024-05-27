@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 
 # Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
+page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "KNN Regression", "Neural Network"])
 
 def show_intro_page():
     st.title("Predicting Election Results (Party Lists) for the Auckland Region")
@@ -183,8 +183,6 @@ def show_Data_Collection_page():
         st.plotly_chart(fig)
     except FileNotFoundError:
         st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
-
-def show_regression_analysis_page():
     
         
 def show_knn_page():
@@ -643,8 +641,6 @@ if page == "Introduction":
     show_intro_page()
 elif page == "Data Collection":
     show_Data_Collection_page()
-elif page == "Linear, Polynomial, Decision Tree, Random Forest Regression":
-    show_regression_analysis_page()
 elif page == "KNN Regression":
     show_knn_page()
 elif page == "Neural Network":
