@@ -12,6 +12,7 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import seaborn as sns
 import leafmap.foliumap as leafmap
+import plotly.graph_objects as go
 
 # Navigation
 st.sidebar.title("Navigation")
@@ -55,18 +56,24 @@ def show_Data_Collection_page():
         if selected_parties:
             party_votes_corrected = combined_result_list.groupby('Election Year')[selected_parties].mean(numeric_only=True)
             
-            plt.figure(figsize=(12, 8))
+            fig = go.Figure()
             for column in party_votes_corrected.columns:
-                plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
+                fig.add_trace(go.Scatter(
+                    x=party_votes_corrected.index, 
+                    y=party_votes_corrected[column], 
+                    mode='lines+markers', 
+                    name=column, 
+                    line=dict(color=party_colors.get(column))
+                ))
             
-            plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
-            plt.xlabel('Election Year')
-            plt.ylabel('Average Party Vote by Percentage')
-            plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.axhline(0, color='black', linewidth=0.5)
-            plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
-            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-            st.pyplot(plt)
+            fig.update_layout(
+                title='Average Party Vote Percentages in Auckland Region (2017-2023)',
+                xaxis_title='Election Year',
+                yaxis_title='Average Party Vote by Percentage',
+                legend_title='Party',
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig)
         else:
             st.write("Please select at least one party to visualize.")
     except FileNotFoundError:
