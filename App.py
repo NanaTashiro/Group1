@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import leafmap.foliumap as leafmap
 
-
 # Navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Go to", ["Introduction", "Data Collection", "Linear, Polynomial, Decision Tree, Random Forest Regression", "KNN Regression", "Neural Network"])
@@ -37,49 +36,51 @@ def show_Data_Collection_page():
     st.title("Data Collection")
 
     st.header("Election Results (List) of each electorate in Auckland region from 2017-2023")
-    combined_result_list = pd.read_csv(combined_result_list.csv)
-    st.dataframe(combined_result_list)
-
-    party_colors = {
-        'ACT New Zealand Vote': 'yellow',
-        'Green Party Vote': 'green',
-        'Labour Party Vote': 'red',
-        'National Party Vote': 'blue',
-        'New Zealand First Party Vote': 'black',
-        'Others Vote': 'grey'
-    }
-    
-    st.write("Select parties to visualize:")
-    selected_parties = st.multiselect('Parties', options=list(party_colors.keys()), default=list(party_colors.keys()))
-
-    if selected_parties:
-        party_votes_corrected = combined_result_list.groupby('Election Year')[selected_parties].mean(numeric_only=True)
-        
-        plt.figure(figsize=(12, 8))
-        for column in party_votes_corrected.columns:
-            plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
-        
-        plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
-        plt.xlabel('Election Year')
-        plt.ylabel('Average Party Vote by Percentage')
-        plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.axhline(0, color='black', linewidth=0.5)
-        plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-        st.pyplot(plt)
-    else:
-        st.write("Please select at least one party to visualize.")
-
-    
-        st.header("Demographic Data of all electorates from 2017-2024")
     try:
-        combined_all_demo = pd.read_csv('/mnt/data/combined_all_demo.csv')
+        combined_result_list = pd.read_csv('combined_result_list.csv')
+        st.dataframe(combined_result_list)
+
+        party_colors = {
+            'ACT New Zealand Vote': 'yellow',
+            'Green Party Vote': 'green',
+            'Labour Party Vote': 'red',
+            'National Party Vote': 'blue',
+            'New Zealand First Party Vote': 'black',
+            'Others Vote': 'grey'
+        }
+
+        st.write("Select parties to visualize:")
+        selected_parties = st.multiselect('Parties', options=list(party_colors.keys()), default=list(party_colors.keys()))
+
+        if selected_parties:
+            party_votes_corrected = combined_result_list.groupby('Election Year')[selected_parties].mean(numeric_only=True)
+            
+            plt.figure(figsize=(12, 8))
+            for column in party_votes_corrected.columns:
+                plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
+            
+            plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
+            plt.xlabel('Election Year')
+            plt.ylabel('Average Party Vote by Percentage')
+            plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.axhline(0, color='black', linewidth=0.5)
+            plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
+            plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            st.pyplot(plt)
+        else:
+            st.write("Please select at least one party to visualize.")
+    except FileNotFoundError:
+        st.error("The file 'combined_result_list.csv' was not found. Please upload the file to proceed.")
+
+    st.header("Demographic Data of all electorates from 2017-2024")
+    try:
+        combined_all_demo = pd.read_csv('combined_all_demo.csv')
         st.dataframe(combined_all_demo)
     except FileNotFoundError:
         st.error("The file 'combined_all_demo.csv' was not found. Please upload the file to proceed.")
     
     try:
-        Area_Coords = pd.read_csv('/mnt/data/Geo_info.csv')
+        Area_Coords = pd.read_csv('Geo_info.csv')
         Area_Coords = Area_Coords[['Respondents','Latitude', 'Longitude', '15-29 years',
                '30-64 years', '65 years and over', 'No qualification',
                'Level 3 certificate', 'Level 4 certificate', 'Level 5 diploma', 'Level 6 diploma',
@@ -110,7 +111,7 @@ def show_Data_Collection_page():
 
     st.header("Polling data from 2017-2024")
     try:
-        election_poll_2017_2024 = pd.read_csv('/mnt/data/election_poll_2017_2024.csv')
+        election_poll_2017_2024 = pd.read_csv('election_poll_2017_2024.csv')
         st.dataframe(election_poll_2017_2024)
 
         # Convert the notebook code into Streamlit interactive model
@@ -121,7 +122,7 @@ def show_Data_Collection_page():
         for party in parties:
             election_poll_2017_2024[f'{party} Change'] = election_poll_2017_2024[party].diff()
 
-        key_events = pd.read_csv("/mnt/data/key_events.csv")
+        key_events = pd.read_csv('key_events.csv')
         key_events['Date'] = pd.to_datetime(key_events['Date'])
         key_events.sort_values(by='Date', inplace=True)
 
