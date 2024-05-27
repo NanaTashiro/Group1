@@ -214,6 +214,10 @@ def show_regression_analysis_page():
     Y_train = combined_targets_train.drop(columns=['Election Year', 'Electorate'])
     X_test = prediction_data.drop(columns=['Election Year', 'Electorate'])
     
+    # Ensure 'Election Year' and 'Electorate' columns are in Y_train
+    Y_train['Election Year'] = combined_targets_train['Election Year'].values
+    Y_train['Electorate'] = combined_targets_train['Electorate'].values
+
     # Scaling the data
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -402,6 +406,7 @@ def show_regression_analysis_page():
     # Plot for each electorate in the year 2017
     for electorate in unique_electorates:
         plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
+
     
 def show_knn_page():
     # Subset of features (party votes)
