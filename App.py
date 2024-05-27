@@ -153,22 +153,27 @@ def show_Data_Collection_page():
         combined_events = impactful_events_df.groupby(['Event Date', 'Event']).apply(lambda df: ', '.join([f"{row['Party']} ({row['Change']:+.1f}%)" for _, row in df.iterrows()])).reset_index()
         combined_events.columns = ['Event Date', 'Event', 'Impact']
         
-        plt.figure(figsize=(15, 8))
+        fig = go.Figure()
         for party in parties:
-            plt.plot(election_poll_2017_2024['Date'], election_poll_2017_2024[party], label=party)
+            fig.add_trace(go.Scatter(
+                x=election_poll_2017_2024['Date'], 
+                y=election_poll_2017_2024[party], 
+                mode='lines+markers', 
+                name=party
+            ))
         
         for _, row in impactful_events_df.iterrows():
-            plt.axvline(x=row['Date'], color='gray', linestyle='--', linewidth=0.5)
-            plt.scatter(row['Date'], election_poll_2017_2024.loc[election_poll_2017_2024['Date'] == row['Date'], row['Party']].values[0], color='red', zorder=5)
+            fig.add_vline(x=row['Date'], line=dict(color='gray', width=1, dash='dash'))
         
-        plt.title('Polling Results with Changes > 5%')
-        plt.xlabel('Date')
-        plt.ylabel('Polling Percentage')
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.grid(True)
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        st.pyplot(plt)
+        fig.update_layout(
+            title='Polling Results with Changes > 5%',
+            xaxis_title='Date',
+            yaxis_title='Polling Percentage',
+            legend_title='Party',
+            hovermode='x unified'
+        )
+        
+        st.plotly_chart(fig)
     except FileNotFoundError:
         st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
 
