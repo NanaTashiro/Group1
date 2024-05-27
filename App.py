@@ -45,7 +45,6 @@ def show_Data_Collection_page():
     combined_result_list = pd.read_csv(combined_result_list_path)
     st.dataframe(combined_result_list)
 
-    # Plotting the general trend of past 3 years elections of lists in Auckland Region
     party_colors = {
         'ACT New Zealand Vote': 'yellow',
         'Green Party Vote': 'green',
@@ -55,21 +54,28 @@ def show_Data_Collection_page():
         'Others Vote': 'grey'
     }
     
-    party_votes_corrected = combined_result_list.groupby('Election Year').mean(numeric_only=True)
-    
-    plt.figure(figsize=(12, 8))
-    for column in party_votes_corrected.columns:
-        plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
-    
-    plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
-    plt.xlabel('Election Year')
-    plt.ylabel('Average Party Vote by Percentage')
-    plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.axhline(0, color='black', linewidth=0.5)
-    plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-    st.pyplot(plt)
+    st.write("Select parties to visualize:")
+    selected_parties = st.multiselect('Parties', options=list(party_colors.keys()), default=list(party_colors.keys()))
 
+    if selected_parties:
+        party_votes_corrected = combined_result_list.groupby('Election Year')[selected_parties].mean(numeric_only=True)
+        
+        plt.figure(figsize=(12, 8))
+        for column in party_votes_corrected.columns:
+            plt.plot(party_votes_corrected.index, party_votes_corrected[column], marker='o', label=column, color=party_colors.get(column))
+        
+        plt.title('Average Party Vote Percentages in Auckland Region (2017-2023)')
+        plt.xlabel('Election Year')
+        plt.ylabel('Average Party Vote by Percentage')
+        plt.legend(title='Party', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.axhline(0, color='black', linewidth=0.5)
+        plt.axvline(party_votes_corrected.index.min(), color='black', linewidth=0.5)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+        st.pyplot(plt)
+    else:
+        st.write("Please select at least one party to visualize.")
+
+    
     st.header("Demographic Data of all electorates from 2017-2024")
     combined_all_demo = pd.read_csv(combined_all_demo_path)
     st.dataframe(combined_all_demo)
