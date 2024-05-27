@@ -183,7 +183,7 @@ def show_Data_Collection_page():
     
     
 def show_Linear_Polynomial_Decision_Tree_Random_Forest_Regression_page():
-    st.title('Linear, Polynomial, Decision Tree and Random Forest Regression)
+    st.title('Linear, Polynomial, Decision Tree and Random Forest Regression')
 
     # Model training and evaluation
     st.write('### Model Training and Evaluation')
