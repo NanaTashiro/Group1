@@ -611,7 +611,7 @@ def show_nn_page():
     st.subheader("Combined Neural Prediction for 2017, 2020, 2023")
     st.dataframe(combined_neural_predictions)
     
-    st.subheader("Final Neural Prediction after Cross-validation")
+    st.subheader("Final Neural Prediction for 2024 after Cross-validation")
     st.dataframe(final_neural_predictions1_2024)
     
     # Normalize and map electorate names
