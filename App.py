@@ -184,36 +184,39 @@ def show_Data_Collection_page():
     except FileNotFoundError:
         st.error("The file 'election_poll_2017_2024.csv' was not found. Please upload the file to proceed.")
 
-    
 def show_regression_analysis_page():
     st.title('Linear, Polynomial, Decision Tree, and Random Forest Regression')
 
     st.write('### Model Training and Evaluation')
-    
+
     # Load datasets
     new_merged_demo_polls_path = 'merged_demo_polls.csv'
     new_combined_result_list_path = 'combined_result_list.csv'
-    
+
     new_merged_demo_polls = pd.read_csv(new_merged_demo_polls_path)
     new_combined_result_list = pd.read_csv(new_combined_result_list_path)
-    
+
     # Prepare the training set (2017, 2020, 2023) and the prediction set (2024)
-    combined_data_train = pd.concat([new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2017],
-                                     new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2020],
-                                     new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2023]])
-    
-    combined_targets_train = pd.concat([new_combined_result_list[new_combined_result_list['Election Year'] == 2017],
-                                        new_combined_result_list[new_combined_result_list['Election Year'] == 2020],
-                                        new_combined_result_list[new_combined_result_list['Election Year'] == 2023]])
-    
+    combined_data_train = pd.concat([
+        new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2017],
+        new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2020],
+        new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2023]
+    ])
+
+    combined_targets_train = pd.concat([
+        new_combined_result_list[new_combined_result_list['Election Year'] == 2017],
+        new_combined_result_list[new_combined_result_list['Election Year'] == 2020],
+        new_combined_result_list[new_combined_result_list['Election Year'] == 2023]
+    ])
+
     # Prepare the feature set for 2024 prediction
     prediction_data = new_merged_demo_polls[new_merged_demo_polls['Election Year'] == 2024]
-    
+
     # Splitting the data into features (X) and targets (Y)
     X_train = combined_data_train.drop(columns=['Election Year', 'Electorate'])
     Y_train = combined_targets_train.drop(columns=['Election Year', 'Electorate'])
     X_test = prediction_data.drop(columns=['Election Year', 'Electorate'])
-    
+
     # Ensure 'Election Year' and 'Electorate' columns are in Y_train
     Y_train['Election Year'] = combined_targets_train['Election Year'].values
     Y_train['Electorate'] = combined_targets_train['Electorate'].values
@@ -243,11 +246,20 @@ def show_regression_analysis_page():
 
     # Merging data
     merged_data = pd.merge(X_train_scaled_df, Y_train, on=["Election Year", "Electorate"])
-    X = merged_data.drop(columns=["Election Year", "Electorate", "ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"])
-    y = merged_data[["ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote", "Others Vote"]]
+    X = merged_data.drop(columns=[
+        "Election Year", "Electorate", "ACT New Zealand Vote", "Green Party Vote",
+        "Labour Party Vote", "National Party Vote", "New Zealand First Party Vote",
+        "Others Vote"
+    ])
+    y = merged_data[[
+        "ACT New Zealand Vote", "Green Party Vote", "Labour Party Vote",
+        "National Party Vote", "New Zealand First Party Vote", "Others Vote"
+    ]]
 
     # Split data into training and validation sets
-    X_ftrain_final, X_ftest_final, Y_ftrain_final, Y_ftest_final = train_test_split(X, y, test_size=0.4, random_state=42)
+    X_ftrain_final, X_ftest_final, Y_ftrain_final, Y_ftest_final = train_test_split(
+        X, y, test_size=0.4, random_state=42
+    )
 
     # Train and evaluate models
     models = {
@@ -312,7 +324,10 @@ def show_regression_analysis_page():
         selected_features_corr = corr_matrix[party].abs().sort_values(ascending=False).head(10).index.tolist()
         selected_features_dict[party] = selected_features_corr
 
-    selected_features = list(set([feature for party_features in selected_features_dict.values() for feature in party_features if feature in X_ftrain_final.columns]))
+    selected_features = list(set([
+        feature for party_features in selected_features_dict.values()
+        for feature in party_features if feature in X_ftrain_final.columns
+    ]))
 
     X_train_selected = X_ftrain_final[selected_features]
     X_test_selected = X_ftest_final[selected_features]
@@ -402,12 +417,11 @@ def show_regression_analysis_page():
     tree_model.fit(X_train_scaled_df, Y_train)
     tree_pred = tree_model.predict(X_train_scaled_df)
     tree_pred_df = pd.DataFrame(tree_pred, columns=Y_train.columns, index=Y_train.index)
-    
+
     # Plot for each electorate in the year 2017
     for electorate in unique_electorates:
         plot_actual_vs_predicted_by_electorate_year(electorate, 2017, Y_train, tree_pred_df)
-
-    
+        
 def show_knn_page():
     # Subset of features (party votes)
     subset_features = ['National Party Vote', 'Labour Party Vote', 'Green Party Vote', 'New Zealand First Party Vote', 'ACT New Zealand Vote', 'Others Vote']
