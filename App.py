@@ -473,22 +473,27 @@ def show_knn_page():
             comparison_df = pd.concat([comparison_df, temp_df], ignore_index=True)
         return comparison_df
     
-    # Function to plot comparison for a single year
+    # Function to plot comparison for a single year using Plotly
     def plot_comparison(comparison_df, year, electorate):
         if comparison_df.empty:
             st.write(f"No common electorates for {year}. Skipping plot.")
             return
-        
-        fig, ax = plt.subplots()
+    
         comparison_df = comparison_df.melt(id_vars=['Feature'], value_vars=['Actual', 'Predicted'], var_name='Type', value_name='Votes')
-        sns.lineplot(data=comparison_df, x='Feature', y='Votes', hue='Type', marker='o', ax=ax)
-        ax.set_title(f'Comparison of Actual and Predicted Votes by Party for {electorate} in {year}')
-        ax.set_xlabel('Party')
-        ax.set_ylabel('Votes')
-        ax.set_xticks(range(len(subset_features)))
-        ax.set_xticklabels(subset_features, rotation=45, ha='right')
-        ax.legend()
-        st.pyplot(fig)
+    
+        fig = go.Figure()
+        for type_ in comparison_df['Type'].unique():
+            df_filtered = comparison_df[comparison_df['Type'] == type_]
+            fig.add_trace(go.Scatter(x=df_filtered['Feature'], y=df_filtered['Votes'], mode='lines+markers', name=type_))
+    
+        fig.update_layout(
+            title=f'Comparison of Actual and Predicted Votes by Party for {electorate} in {year}',
+            xaxis_title='Party',
+            yaxis_title='Votes',
+            legend_title='Type',
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig)
     
     # User inputs for comparison
     st.header("Compare Actual and Predicted Votes")
@@ -498,32 +503,37 @@ def show_knn_page():
     comparison_df = create_comparison_df(year, electorate)
     plot_comparison(comparison_df, year, electorate)
     
-    # Function to plot 2024 predictions with color by party name as bar charts and add results number
+    # Function to plot 2024 predictions with color by party name as bar charts and add results number using Plotly
     def plot_predictions_2024(predictions_df, electorate):
         predictions = predictions_df[predictions_df['Electorate'] == electorate]
         if predictions.empty:
             st.write(f"No data available for {electorate} in 2024.")
             return
-        
+    
         predictions = predictions.melt(id_vars=['Electorate'], value_vars=subset_features, var_name='Party', value_name='Votes')
-        
-        fig, ax = plt.subplots()
-        sns.barplot(data=predictions, x='Party', y='Votes', palette=party_colors, ax=ax)
+    
+        fig = go.Figure()
+        for party in predictions['Party'].unique():
+            df_filtered = predictions[predictions['Party'] == party]
+            fig.add_trace(go.Bar(x=[party], y=df_filtered['Votes'], name=party, marker_color=party_colors.get(party)))
+    
+        fig.update_layout(
+            title=f'Predicted Votes for {electorate} in 2024',
+            xaxis_title='Party',
+            yaxis_title='Votes (%)',
+            hovermode='x unified'
+        )
         
         # Add vote counts on top of each bar
-        for index, row in predictions.iterrows():
-            ax.text(index, row['Votes'], f'{row["Votes"]:.2f}%', color='black', ha="center")
-        
-        ax.set_title(f'Predicted Votes for {electorate} in 2024')
-        ax.set_xlabel('Party')
-        ax.set_ylabel('Votes (%)')
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-        st.pyplot(fig)
+        fig.update_traces(texttemplate='%{y:.2f}%', textposition='outside')
+    
+        st.plotly_chart(fig)
     
     # User input for 2024 predictions
     st.header("Predictions for 2024")
     electorate_2024 = st.selectbox("Select Electorate for 2024", prediction_data['Electorate'].unique())
     plot_predictions_2024(final_predictions_2024_df, electorate_2024)
+
 
 
 def show_nn_page():
